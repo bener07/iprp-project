@@ -11,7 +11,7 @@ from extras import *
 # Parâmetros / Constantes
 # =========================
 LARGURA, ALTURA = 600, 600
-BORDA_X = (LARGURA // 2) - 20
+BORDA_X = (LARGURA // 2) # - 20
 BORDA_Y = (ALTURA // 2) - 10
 
 PLAYER_SPEED = 20
@@ -42,22 +42,22 @@ STATE = None  # usado apenas para callbacks do teclado
 # Top Resultados (Highscores)
 # =========================
 def ler_highscores(filename):
-    print("[ler_highscores] implementado com json, devolve dict")
+    # print("[ler_highscores] implementado com json, devolve dict")
     return lerJson(filename)
 
 def atualizar_highscores(filename, score):
     armazenar_dict(filename, score)
-    print("[atualizar_highscores] implementado com json, devolve None")
+    # print("[atualizar_highscores] implementado com json, devolve None")
 
 # =========================
 # Guardar / Carregar estado (texto)
 # =========================
 def guardar_estado_txt(filename, state):
     armazenar_dict(filename, state)
-    print("[guardar_estado_txt] implementado com json, devolve None")
+    # print("[guardar_estado_txt] implementado com json, devolve None")
 
 def carregar_estado_txt(filename):
-    print("[carregar_estado_txt] implementado com json, devolve dict ou False, caso não encontre")
+    # print("[carregar_estado_txt] implementado com json, devolve dict ou False, caso não encontre")
     return lerJson(filename) # carregar outro jogo já guardado
 
     
@@ -72,27 +72,32 @@ def criar_entidade(x,y, tipo="enemy"):
     else:
         t.shape("enemy.gif")
     t.setposition(x,y)
-    print("[criar_entidade] por implementar")
+    t.penup()
+    # print("[criar_entidade] por implementar")
     return t 
 
 def criar_bala(x, y, tipo):
     t = turtle.Turtle(visible=False)
 
-    print("[criar_bala] por implementar")
+    # print("[criar_bala] por implementar")
     
     t.showturtle()
     return t
 
 def spawn_inimigos_em_grelha(state, posicoes_existentes, dirs_existentes=None):
-    print("[spawn_inimigos_em_grelha] por implementar")
+    # print("[spawn_inimigos_em_grelha] por implementar")
+    return
 
 def restaurar_balas(state, lista_pos, tipo):
-    print("[restaurar_balas] por implementar")
+    # print("[restaurar_balas] por implementar")
+    return
 
 def move_player(direction):
     player = STATE["player"]
     x,y = player.pos()
     new_x = x + direction*PLAYER_SPEED
+    if new_x <= -BORDA_X or new_x >= BORDA_X:
+        return
     player.goto(new_x, y)
 
 # =========================
@@ -100,47 +105,58 @@ def move_player(direction):
 # =========================
 def mover_esquerda_handler():
     move_player(-1)
-    print("[mover_esquerda_handler] por implementar")
+    # print("[mover_esquerda_handler] por implementar")
 
 def mover_direita_handler():
     move_player(1)
-    print("[mover_direita_handler] por implementar")
+    # print("[mover_direita_handler] por implementar")
 
 def disparar_handler():
-    print("[disparar_handler] por implementar")
+    # print("[disparar_handler] por implementar")
+    return
 
 def gravar_handler():
-    print("[gravar_handler] por implementar")
+    # print("[gravar_handler] por implementar")
+    return
 
 def terminar_handler():
-    print("[terminar_handler] por implementar")
+    # print("[terminar_handler] por implementar")
+    return
 
 # =========================
 # Atualizações e colisões
 # =========================
 def atualizar_balas_player(state):
-    print("[atualizar_balas_player] por implementar")
+    # print("[atualizar_balas_player] por implementar")
+    return
 
 def atualizar_balas_inimigos(state):
-    print("[atualizar_balas_inimigos] por implementar")
+    # print("[atualizar_balas_inimigos] por implementar")
+    return
 
 def atualizar_inimigos(state):
-    print("[atualizar_inimigos] por implementar")
+    # print("[atualizar_inimigos] por implementar")
+    return
 
 def inimigos_disparam(state):
-    print("[inimigos_disparam] por implementar")
+    # print("[inimigos_disparam] por implementar")
+    return
 
 def verificar_colisoes_player_bullets(state):
-    print("[verificar_colisoes_player_bullets] por implementar")
+    # print("[verificar_colisoes_player_bullets] por implementar")
+    return
 
 def verificar_colisoes_enemy_bullets(state):
-    print("[verificar_colisoes_enemy_bullets] por implementar")
+    # print("[verificar_colisoes_enemy_bullets] por implementar")
+    return
 
 def inimigo_chegou_ao_fundo(state):
-    print("[inimigo_chegou_ao_fundo] por implementar")
+    # print("[inimigo_chegou_ao_fundo] por implementar")
+    return
 
 def verificar_colisao_player_com_inimigos(state):
-    print("[verificar_colisao_player_com_inimigos] por implementar")
+    # print("[verificar_colisao_player_com_inimigos] por implementar")
+    return
 
 # =========================
 # Execução principal
@@ -160,7 +176,7 @@ if __name__ == "__main__":
     # Imagens obrigatórias
     for img in ["player.gif", "enemy.gif"]:
         if not os.path.exists(img):
-            print("ERRO: imagem '" + img + "' não encontrada.")
+            # print("ERRO: imagem '" + img + "' não encontrada.")
             sys.exit(1)
         screen.addshape(img)
 
@@ -179,10 +195,10 @@ if __name__ == "__main__":
 
     # Construção inicial
     if isinstance(loaded, dict):
-        print("recebeu-se dicionário")
+        # print("recebeu-se dicionário")
         sys.exit(0)
     else:
-        print("New game!")
+        # print("New game!")
         state["player"] = criar_entidade(0, -200, "player") ## inicial: 0, -350
         spawn_inimigos_em_grelha(state, None, None)
 
@@ -206,19 +222,19 @@ if __name__ == "__main__":
         verificar_colisoes_player_bullets(STATE)
         
         if verificar_colisao_player_com_inimigos(STATE):
-            print("Colisão direta com inimigo! Game Over")
+            # print("Colisão direta com inimigo! Game Over")
             terminar_handler()
         
         if verificar_colisoes_enemy_bullets(STATE):
-            print("Atingido por inimigo! Game Over")
+            # print("Atingido por inimigo! Game Over")
             terminar_handler()
 
         if inimigo_chegou_ao_fundo(STATE):
-            print("Um inimigo chegou ao fundo! Game Over")
+            # print("Um inimigo chegou ao fundo! Game Over")
             terminar_handler()
 
         # if len(STATE["enemies"]) == 0:
-        #     print("Vitória! Todos os inimigos foram destruídos.")
+        #     # print("Vitória! Todos os inimigos foram destruídos.")
         #     terminar_handler()
 
         STATE["frame"] += 1
