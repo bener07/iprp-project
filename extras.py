@@ -1,3 +1,4 @@
+from random import randint
 import json
 import os
 
@@ -19,3 +20,10 @@ def lerJson(filename):
     with open(filename, "r") as file:
         content = file.read()
     return eval(content)
+
+
+def determinateEventExecution(probability):
+    n = randint(0, 10000)
+    if n < probability*10000:
+        return True
+    return False

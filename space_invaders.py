@@ -23,6 +23,7 @@ ENEMY_SPACING_X = 60
 ENEMY_SPACING_Y = 60
 ENEMY_SIZE = 32
 ENEMY_START_Y = BORDA_Y - ENEMY_SIZE    # topo visível
+ENEMY_START_X = -BORDA_X + ENEMY_SIZE
 ENEMY_FALL_SPEED = 0.5
 ENEMY_DRIFT_STEP = 2
 ENEMY_FIRE_PROB = 0.006
@@ -36,6 +37,21 @@ SAVE_FILE = "savegame.txt"
 TOP_N = 10
 
 STATE = None  # usado apenas para callbacks do teclado
+
+# ==================
+# boolean functions
+# ==================
+
+def verifyOutOfBoundariesWidth(x):
+    if x <= -BORDA_X or x >= BORDA_X:
+        return True
+    return False
+
+def verifyOutOfBoundariesHeight(y):
+    if y <= -BORDA_Y or y >= BORDA_Y:
+        return True
+    return False
+
 
 
 # =========================
@@ -71,20 +87,34 @@ def criar_entidade(x,y, tipo="enemy"):
         t.shape("player.gif")
     else:
         t.shape("enemy.gif")
-    t.setposition(x,y)
     t.penup()
+    t.setposition(x,y)
     # print("[criar_entidade] por implementar")
     return t 
 
 def criar_bala(x, y, tipo):
     t = turtle.Turtle(visible=False)
-
-    # print("[criar_bala] por implementar")
-    
+    t.penup()
+    t.setpos(x,y)
+    t.shape("square")
+    t.shapesize(0.8, 0.08, 5)
+    if tipo == "player":
+        t.color("yellow") ## Alterar para utilizar com inimigos
+    else:
+        t.color("red")
     t.showturtle()
     return t
 
 def spawn_inimigos_em_grelha(state, posicoes_existentes, dirs_existentes=None):
+    enemies = state["enemies"]
+    for enemy_row in range(0, ENEMY_ROWS):
+        print(ENEMY_START_X, ENEMY_START_Y)
+        y_enemy = ENEMY_START_Y - enemy_row*ENEMY_SPACING_Y
+        for enemy_col in range(0, ENEMY_COLS):
+            x_enemy = ENEMY_START_X + enemy_col*ENEMY_SPACING_X
+            enemy = criar_entidade(x_enemy, y_enemy)
+            enemy.penup()
+            enemies.append( enemy )
     # print("[spawn_inimigos_em_grelha] por implementar")
     return
 
@@ -92,16 +122,19 @@ def restaurar_balas(state, lista_pos, tipo):
     # print("[restaurar_balas] por implementar")
     return
 
+# =========================
+# Movimento de utilizador
+# =========================
 def move_player(direction):
     player = STATE["player"]
     x,y = player.pos()
     new_x = x + direction*PLAYER_SPEED
-    if new_x <= -BORDA_X or new_x >= BORDA_X:
+    if verifyOutOfBoundaries(new_x):
         return
-    player.goto(new_x, y)
+    player.setx(new_x)
 
 # =========================
-# Handlers de tecla 
+# Handlers de tecl
 # =========================
 def mover_esquerda_handler():
     move_player(-1)
@@ -112,6 +145,9 @@ def mover_direita_handler():
     # print("[mover_direita_handler] por implementar")
 
 def disparar_handler():
+    player = STATE["player"]
+    x,y = player.pos()
+    STATE["player_bullets"].append(criar_bala(x,y, "player"))
     # print("[disparar_handler] por implementar")
     return
 
@@ -123,18 +159,45 @@ def terminar_handler():
     # print("[terminar_handler] por implementar")
     return
 
+def power_up_handler():
+    # power up por implementar
+    return
+
 # =========================
 # Atualizações e colisões
 # =========================
 def atualizar_balas_player(state):
+    for bl in state["player_bullets"]:
+        x, y = bl.pos()
+        if y > BORDA_Y + 20:
+            bl.hideturtle()
+            state["player_bullets"].remove(bl)
+        bl.setpos(x, y + PLAYER_BULLET_SPEED)
     # print("[atualizar_balas_player] por implementar")
     return
 
 def atualizar_balas_inimigos(state):
+    for ebl in state["enemy_bullets"]:
+        x, y = ebl.pos()
+        if y < -BORDA_Y + 20:
+            bl.hideturtle()
+            state["enemy_bullets"].remove(ebl)
+        bl.setpos(x, y - ENEMY_BULLET_SPEED)
     # print("[atualizar_balas_inimigos] por implementar")
     return
 
 def atualizar_inimigos(state):
+    may_i_drift = determinateEventExecution(ENEMY_DRIFT_CHANCE)
+    invert = state["enemy_invert"]
+    for enemy in state["enemies"]:
+        x, y = enemy.pos()
+        new_x = x + ENEMY_DRIFT_STEP*may_i_drift*invert
+        new_y = y - ENEMY_FALL_SPEED
+        if verifyOutOfBoundariesWidth(new_x):
+            new_x = x
+            invert = -invert
+        enemy.setx(new_x)
+        enemy.sety(new_y)
     # print("[atualizar_inimigos] por implementar")
     return
 
@@ -185,6 +248,7 @@ if __name__ == "__main__":
         "screen": screen,
         "player": None,
         "enemies": [],
+        "enemy_invert": 1,
         "enemy_moves": [],
         "player_bullets": [],
         "enemy_bullets": [],
@@ -212,6 +276,7 @@ if __name__ == "__main__":
     screen.onkeypress(disparar_handler, "space")
     screen.onkeypress(gravar_handler, "g")
     screen.onkeypress(terminar_handler, "Escape")
+    screen.onkeypress(power_up_handler, "p")
 
     # Loop principal
     while True:
