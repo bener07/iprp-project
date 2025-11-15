@@ -1,5 +1,5 @@
-from random import randint
 import json
+import random
 import os
 
 # =========================
@@ -23,7 +23,7 @@ def lerJson(filename):
 
 
 def determinateEventExecution(probability):
-    n = randint(0, 10000)
-    if n < probability*10000:
+    n = random.random()
+    if n < probability:
         return True
     return False

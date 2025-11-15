@@ -17,7 +17,7 @@ BORDA_Y = (ALTURA // 2) - 10
 PLAYER_SPEED = 20
 PLAYER_BULLET_SPEED = 16
 
-ENEMY_ROWS = 3
+ENEMY_ROWS = 2
 ENEMY_COLS = 10
 ENEMY_SPACING_X = 60
 ENEMY_SPACING_Y = 60
@@ -129,7 +129,7 @@ def move_player(direction):
     player = STATE["player"]
     x,y = player.pos()
     new_x = x + direction*PLAYER_SPEED
-    if verifyOutOfBoundaries(new_x):
+    if verifyOutOfBoundariesWidth(new_x):
         return
     player.setx(new_x)
 
@@ -147,7 +147,7 @@ def mover_direita_handler():
 def disparar_handler():
     player = STATE["player"]
     x,y = player.pos()
-    STATE["player_bullets"].append(criar_bala(x,y, "player"))
+    STATE["player_bullets"].append(criar_bala(x,y+10, "player"))
     # print("[disparar_handler] por implementar")
     return
 
@@ -191,7 +191,7 @@ def atualizar_inimigos(state):
     invert = state["enemy_invert"]
     for enemy in state["enemies"]:
         x, y = enemy.pos()
-        new_x = x + ENEMY_DRIFT_STEP*may_i_drift*invert
+        new_x = x #+ ENEMY_DRIFT_STEP*may_i_drift*invert
         new_y = y #- ENEMY_FALL_SPEED
         if verifyOutOfBoundariesWidth(new_x+10):
             state["enemy_invert"] = -invert
@@ -204,8 +204,7 @@ def inimigos_disparam(state):
     for enemy in state["enemies"]:
         x, y = enemy.pos()
         if determinateEventExecution(ENEMY_FIRE_PROB):
-            print("SHOOT")
-            state["enemy_bullets"].append(criar_bala(x,y, "enemy"))
+            state["enemy_bullets"].append(criar_bala(x,y-10, "enemy"))
     # print("[inimigos_disparam] por implementar")
     return
 
@@ -214,6 +213,17 @@ def verificar_colisoes_player_bullets(state):
     return
 
 def verificar_colisoes_enemy_bullets(state):
+    for bullet in state["player_bullets"]:
+        bx, by = bullet.pos()
+        for enemy in state["enemies"]:
+            x, y = enemy.pos()
+            print(x,y)
+            if ((x-bx)**2 + (y - by)**2 <= COLLISION_RADIUS and by >= y) and bullet in state["player_bullets"]:
+                print("Atingido")
+                enemy.hideturtle()
+                bullet.hideturtle()
+                state["player_bullets"].remove(bullet)
+                state["enemies"].remove(enemy)
     # print("[verificar_colisoes_enemy_bullets] por implementar")
     return
 
