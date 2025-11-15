@@ -10,8 +10,8 @@ from extras import *
 # =========================
 # Parâmetros / Constantes
 # =========================
-LARGURA, ALTURA = 600, 600
-BORDA_X = (LARGURA // 2) # - 20
+LARGURA, ALTURA = 700, 600
+BORDA_X = (LARGURA // 2) - 20
 BORDA_Y = (ALTURA // 2) - 10
 
 PLAYER_SPEED = 20
@@ -43,7 +43,7 @@ STATE = None  # usado apenas para callbacks do teclado
 # ==================
 
 def verifyOutOfBoundariesWidth(x):
-    if x <= -BORDA_X or x >= BORDA_X:
+    if x <= -BORDA_X+20 or x >= BORDA_X-20:
         return True
     return False
 
@@ -180,9 +180,9 @@ def atualizar_balas_inimigos(state):
     for ebl in state["enemy_bullets"]:
         x, y = ebl.pos()
         if y < -BORDA_Y + 20:
-            bl.hideturtle()
+            ebl.hideturtle()
             state["enemy_bullets"].remove(ebl)
-        bl.setpos(x, y - ENEMY_BULLET_SPEED)
+        ebl.setpos(x, y - ENEMY_BULLET_SPEED)
     # print("[atualizar_balas_inimigos] por implementar")
     return
 
@@ -192,16 +192,20 @@ def atualizar_inimigos(state):
     for enemy in state["enemies"]:
         x, y = enemy.pos()
         new_x = x + ENEMY_DRIFT_STEP*may_i_drift*invert
-        new_y = y - ENEMY_FALL_SPEED
-        if verifyOutOfBoundariesWidth(new_x):
-            new_x = x
-            invert = -invert
+        new_y = y #- ENEMY_FALL_SPEED
+        if verifyOutOfBoundariesWidth(new_x+10):
+            state["enemy_invert"] = -invert
         enemy.setx(new_x)
         enemy.sety(new_y)
     # print("[atualizar_inimigos] por implementar")
     return
 
 def inimigos_disparam(state):
+    for enemy in state["enemies"]:
+        x, y = enemy.pos()
+        if determinateEventExecution(ENEMY_FIRE_PROB):
+            print("SHOOT")
+            state["enemy_bullets"].append(criar_bala(x,y, "enemy"))
     # print("[inimigos_disparam] por implementar")
     return
 
