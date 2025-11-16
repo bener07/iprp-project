@@ -17,7 +17,7 @@ BORDA_Y = (ALTURA // 2) - 10
 PLAYER_SPEED = 20
 PLAYER_BULLET_SPEED = 16
 
-ENEMY_ROWS = 2
+ENEMY_ROWS = 3
 ENEMY_COLS = 10
 ENEMY_SPACING_X = 60
 ENEMY_SPACING_Y = 60
@@ -108,7 +108,6 @@ def criar_bala(x, y, tipo):
 def spawn_inimigos_em_grelha(state, posicoes_existentes, dirs_existentes=None):
     enemies = state["enemies"]
     for enemy_row in range(0, ENEMY_ROWS):
-        print(ENEMY_START_X, ENEMY_START_Y)
         y_enemy = ENEMY_START_Y - enemy_row*ENEMY_SPACING_Y
         for enemy_col in range(0, ENEMY_COLS):
             x_enemy = ENEMY_START_X + enemy_col*ENEMY_SPACING_X
@@ -152,14 +151,19 @@ def disparar_handler():
     return
 
 def gravar_handler():
-    # print("[gravar_handler] por implementar")
+    print("[gravar_handler] por implementar")
     return
 
 def terminar_handler():
-    # print("[terminar_handler] por implementar")
+    print("[terminar_handler] por implementar")
     return
 
 def power_up_handler():
+    power_up = state["power_up"]
+    bullet = state["player_bullets"][len(state["player_bullets"]) -1] # obter última bala adicionada
+    power_up["activated"] = True
+    power_up["killing_area_center"] = bullet.pos()
+    #print("[power up] por implementar")
     # power up por implementar
     return
 
@@ -209,6 +213,14 @@ def inimigos_disparam(state):
     return
 
 def verificar_colisoes_player_bullets(state):
+    for bullet in state["enemy_bullets"]:
+        bx, by = bullet.pos()
+        x, y = state["player"].pos()
+        if ((x-bx)**2 + (y-by)**2) <= COLLISION_RADIUS**2:
+            state["player"].hideturtle()
+            bullet.hideturtle()
+            state["enemy_bullets"].remove(bullet)
+            state["game_over"] = True
     # print("[verificar_colisoes_player_bullets] por implementar")
     return
 
@@ -217,13 +229,12 @@ def verificar_colisoes_enemy_bullets(state):
         bx, by = bullet.pos()
         for enemy in state["enemies"]:
             x, y = enemy.pos()
-            print(x,y)
-            if ((x-bx)**2 + (y - by)**2 <= COLLISION_RADIUS and by >= y) and bullet in state["player_bullets"]:
-                print("Atingido")
+            radius = COLLISION_RADIUS
+            if ((x-bx)**2 + (y - by)**2 <= radius**2):
                 enemy.hideturtle()
                 bullet.hideturtle()
-                state["player_bullets"].remove(bullet)
                 state["enemies"].remove(enemy)
+                state["player_bullets"].remove(bullet)
     # print("[verificar_colisoes_enemy_bullets] por implementar")
     return
 
@@ -266,6 +277,8 @@ if __name__ == "__main__":
         "enemy_moves": [],
         "player_bullets": [],
         "enemy_bullets": [],
+        "game_over": False,
+        "power_up": {"killing_area_center": None, "activated": False},
         "score": 0,
         "frame": 0,
         "files": {"highscores": HIGHSCORES_FILE, "save": SAVE_FILE}
@@ -311,10 +324,14 @@ if __name__ == "__main__":
         if inimigo_chegou_ao_fundo(STATE):
             # print("Um inimigo chegou ao fundo! Game Over")
             terminar_handler()
+        if state["game_over"]:
+            print("Earth is now alien property!")
+            terminar_handler()
+            sys.exit(0)
 
-        # if len(STATE["enemies"]) == 0:
-        #     # print("Vitória! Todos os inimigos foram destruídos.")
-        #     terminar_handler()
+        if len(STATE["enemies"]) == 0:
+             print("Vitória! Todos os inimigos foram destruídos.")
+             terminar_handler()
 
         STATE["frame"] += 1
         screen.update()
