@@ -371,7 +371,7 @@ def verificar_colisao_player_com_inimigos(state):
     player_x, player_y = state["player"].pos()
     for enemy in state["enemies"]:
         enemy_x, enemy_y = enemy.pos()
-        if ((player_x - enemy_x)**2 + (player_y - enemy_y)**2) <= (COLLISION_RADIUS * 2)**2:
+        if ( (player_x - enemy_x)**2 + (player_y - enemy_y)**2 ) <= (COLLISION_RADIUS * 2)**2:
             return True
     return False
 
