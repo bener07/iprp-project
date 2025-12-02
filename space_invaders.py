@@ -104,11 +104,13 @@ def atualizar_panel(state):
         align='left',
         font=('Arial', 30, 'bold')
     )
-    STATE["player"].showturtle()
+    for life in state["life_dummies"]:
+        life.hideturtle()
 
-    state["life_dummies"] = []
     for i in range(state["lifes"]):
-        state["life_dummies"].append(drawn_life(LARGURA/2-40*state["lifes"], ALTURA/2-20, i))
+        state["life_dummies"][i].showturtle()
+
+    state["player"].showturtle()
 
 # =========================
 # Top Resultados (Highscores)
@@ -399,14 +401,16 @@ def verificar_colisoes_player_bullets(state):
     for bullet in state["enemy_bullets"]:
         bx, by = bullet.pos()
         x, y = state["player"].pos()
-        if ((x-bx)**2 + (y-by)**2) <= COLLISION_RADIUS**2:
+        if ((x-bx)**2 + (y-by)**2) <= COLLISION_RADIUS**2 and not state["hit"]:
             state["player"].hideturtle()
             state["lifes"] -= 1
             bullet.hideturtle()
             state["enemy_bullets"].remove(bullet)
+            state["hit"]=True
+            return True
             # terminar_handler()
     # print("[verificar_colisoes_player_bullets] por implementar")
-    return
+    return False
 
 def verificar_colisoes_enemy_bullets(state):
     for bullet in state["player_bullets"]:
@@ -414,7 +418,7 @@ def verificar_colisoes_enemy_bullets(state):
         for enemy in state["enemies"]:
             x, y = enemy.pos()
             radius = COLLISION_RADIUS*2
-            if ((x-bx)**2 + (y - by)**2 <= radius**2):
+            if ((x-bx)**2 + (y - by)**2 <= radius**2) and bullet in state["player_bullets"]:
                 enemy.hideturtle()
                 bullet.hideturtle()
                 state["enemies"].remove(enemy)
@@ -436,7 +440,7 @@ def verificar_colisao_player_com_inimigos(state):
         px, py = state["player"].pos()
         if ((x-px)**2 + (y-py)**2 <= COLLISION_RADIUS**2):
             print("Colisão inimigo com utilizador")
-            terminar_handler()
+            return True
     # print("[verificar_colisao_player_com_inimigos] por implementar")
     return
 
@@ -481,6 +485,7 @@ if __name__ == "__main__":
         "jogo_terminado": False,
         "lastScore": 0,
         "panelWriter": None,
+        "hit": False,
     }
 
     # Construção inicial
@@ -528,7 +533,7 @@ if __name__ == "__main__":
         atualizar_inimigos(STATE)
         inimigos_disparam(STATE)
         atualizar_balas_inimigos(STATE)
-        verificar_colisoes_player_bullets(STATE)
+        verificar_colisoes_enemy_bullets(STATE)
         
         if verificar_colisao_player_com_inimigos(STATE):
             print("Colisão direta com inimigo! Game Over")
@@ -536,14 +541,15 @@ if __name__ == "__main__":
         
         if state["lifes"] == 0:
             print("O utilizador perdeu todas as suas vidas")
-        
-        if verificar_colisoes_enemy_bullets(STATE):
-            print("Atingido por inimigo! Game Over")
             terminar_handler()
+
+        if verificar_colisoes_player_bullets(STATE):
+            print("Atingido!")
+            state["hit"] = False
+            atualizar_panel(state)
 
         if state["score"] != state["lastScore"]:
             atualizar_panel(state)
-            print(state["score"], state["lastScore"])
             state["lastScore"] = state["score"]
 
         if inimigo_chegou_ao_fundo(STATE):
