@@ -345,9 +345,13 @@ def terminar_handler():
 
 def power_up_handler():
     power_up = STATE["power_up"]
+    if len(state["player_bullets"]) == 0:
+        print("Não tens balas onde aplicar o power up!")
+        return
     bullet = STATE["player_bullets"][len(STATE["player_bullets"]) -1] # obter última bala adicionada
     power_up["activated"] = True
     power_up["killing_area_center"] = bullet.pos()
+    print(bullet.pos())
     return
 
 # =========================
@@ -359,6 +363,7 @@ def atualizar_balas_player(state):
         if y > BORDA_Y + 20:
             bl.hideturtle()
             state["player_bullets"].remove(bl)
+            state["power_up"]["activated"] = False
         bl.setpos(x, y + PLAYER_BULLET_SPEED)
     # print("[atualizar_balas_player] por implementar")
     return
@@ -415,16 +420,24 @@ def verificar_colisoes_player_bullets(state):
 def verificar_colisoes_enemy_bullets(state):
     for bullet in state["player_bullets"]:
         bx, by = bullet.pos()
+        radius = COLLISION_RADIUS
+        # calcular área de impacto
+        if state["power_up"]["activated"]:
+                radius = COLLISION_RADIUS*7
+                bx, by = state["power_up"]["killing_area_center"]
+        in_impact_area = lambda x,y : (x-bx)**2 + (y-by)**2 <= radius**2
         for enemy in state["enemies"]:
             x, y = enemy.pos()
-            radius = COLLISION_RADIUS*2
-            if ((x-bx)**2 + (y - by)**2 <= radius**2) and bullet in state["player_bullets"]:
+            if in_impact_area(x,y):
+                print("in area", enemy.pos())
                 enemy.hideturtle()
-                bullet.hideturtle()
                 state["enemies"].remove(enemy)
-                state["player_bullets"].remove(bullet)
                 state["score"] += 50
-    # print("[verificar_colisoes_enemy_bullets] por implementar")
+        # se acertar num enemy então o score altera-se
+        if state["lastScore"] != state["score"] and bullet in state["player_bullets"]:
+            bullet.hideturtle()
+            state["player_bullets"].remove(bullet)
+            state["power_up"]["activated"] = False
     return
 
 def inimigo_chegou_ao_fundo(state):
