@@ -321,6 +321,8 @@ def terminar_handler():
     
     STATE["jogo_terminado"] = True
 
+    STATE["screen"].bye()
+
     highscores = ler_highscores(HIGHSCORES_FILE)
     if len(highscores)<TOP_N or STATE["score"]>highscores[-1][1]:
         print("GRANDEEEE +1 para o top10")
@@ -429,7 +431,6 @@ def verificar_colisoes_enemy_bullets(state):
         for enemy in state["enemies"]:
             x, y = enemy.pos()
             if in_impact_area(x,y):
-                print("in area", enemy.pos())
                 enemy.hideturtle()
                 state["enemies"].remove(enemy)
                 state["score"] += 50
