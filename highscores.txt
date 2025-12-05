@@ -1,5 +1,10 @@
+ben:500
 b:200
+ben:200
 :100
+goodlord.txt:100
+ben:100
+ben:50
 ben:50
 b:0
 b:0

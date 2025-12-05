@@ -5,6 +5,7 @@ import os
 import sys
 from playsound import playsound
 import math
+from extras import *
 
 # =========================
 # Parâmetros / Constantes
@@ -15,6 +16,8 @@ BORDA_Y = (ALTURA // 2) - 10
 
 PLAYER_SPEED = 20
 PLAYER_BULLET_SPEED = 16
+
+MAX_LIFES = 3
 
 ENEMY_ROWS = 3
 ENEMY_COLS = 10
@@ -56,63 +59,6 @@ def verifyOutOfBoundariesHeight(y):
 def determinateEventExecution(probability):
     return random.random() < probability
 
-
-# =================
-# Design Functions
-# =================
-
-def drawn_life(ix, iy, l): #"print" dos corações que representam as vidas
-    t = turtle.Turtle(visible=True)
-    t.penup()
-    t.setx(ix + l*40)
-    t.sety(iy)
-    t.shape("heart.gif")
-    return t
-
-def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal"), keep=False): #função que limpa a tela e escreve as frases pedidas quando é chamada
-    if STATE["panelWriter"] != None:
-        writer = STATE["panelWriter"]
-    else:
-        writer = turtle.Turtle(visible=False)
-        STATE["panelWriter"] = writer
-    if not keep:
-        writer.clear()
-    writer.hideturtle()
-    writer.penup()
-    writer.goto(x,y)
-    writer.color(color)
-    writer.write(text, align=align, font=font)
-
-def panel(state): #mostrar o score no canto da tela e pedir á função de desenhar as vidas para o fazer 
-    writeOnScreen(
-        "Score: "+str(state["score"]),
-        -LARGURA/2+10,
-        ALTURA/2-50,
-        "white",
-        align='left',
-        font=('Arial', 30, 'bold')
-    )
-    for i in range(state["lifes"]):
-        state["life_dummies"].append(drawn_life(LARGURA/2-40*state["lifes"], ALTURA/2-20, i))
-
-
-def atualizar_panel(state): #atualizar a função anterior
-    writeOnScreen(
-        "Score: "+str(state["score"]),
-        -LARGURA/2+10,
-        ALTURA/2 - 50,
-        "white",
-        align='left',
-        font=('Arial', 30, 'bold')
-    )
-    for life in state["life_dummies"]:
-        life.hideturtle()
-
-    for i in range(state["lifes"]):
-        state["life_dummies"][i].showturtle()
-
-    state["player"].showturtle()
-
 # =========================
 # Top Resultados (Highscores)
 # =========================
@@ -138,7 +84,7 @@ def return_value_n(n):
 def atualizar_highscores(filename, score):
     highscores = ler_highscores(filename)
     if len(highscores)<TOP_N or score>highscores[-1][1]:
-        username=input("É CAMELO o teu score foi "+ str(score)+" in chock :O ... \nVá escreve lá o teu nome para ficar registado")
+        username=input("O teu score foi "+ str(score)+"\n Introduz o teu nome: ")
         highscores.append((username,score))
         firstValue = return_value_n(1)
         highscores.sort(key=firstValue, reverse=True) 
@@ -148,11 +94,14 @@ def atualizar_highscores(filename, score):
         for username, score in highscores:
             f.write(username+":"+str(score)+"\n")
         f.close()
-        print("tá guardado chefe \n")
+        print("Guardado")
 
     print("\n=== TOP HIGHSCORES ===")
-    for i in highscores:
-        print(i[0]+":"+str(i[1]))
+    for i in f:
+        print(":".join(i))
+
+def guardarDataEmFicheiro(name, savingData, file):
+        file.write(name + ":" + ",".join([str(val) for val in savingData]) + "\n" )
 
 # =========================
 # Guardar / Carregar estado (texto)
@@ -168,17 +117,15 @@ def guardar_estado_txt(filename, state):
         "frame": state["frame"],
         "lifes": state["lifes"]
     }
+    filename = filename.split('.')[0] + ".txt" # impedir que sejam guardados como .html, .json, .xml ... (impedir que guarde como tipo de ficheiro diferente a txt)
     f = open(filename, "w")
 
     def saveDict(key, strPreFix):
         for values in guardar_jogo[key]:
-            guardarDataEmFicheiro(strPreFix, values)
-
-    def guardarDataEmFicheiro(name, savingData):
-        f.write(name + ":" + ",".join([str(val) for val in savingData]) + "\n" )
+            guardarDataEmFicheiro(strPreFix, values, f)
 
     #player
-    guardarDataEmFicheiro("player", guardar_jogo["player_pos"])
+    guardarDataEmFicheiro("player", guardar_jogo["player_pos"], f)
 
     # Inimigos
     saveDict("enemies_pos", "enemy")
@@ -191,7 +138,7 @@ def guardar_estado_txt(filename, state):
 
     # Score e frame
     for dataToSaveFromState in ['score', 'frame', 'lifes']:
-        guardarDataEmFicheiro(dataToSaveFromState, (guardar_jogo[dataToSaveFromState],) )
+        guardarDataEmFicheiro(dataToSaveFromState, (guardar_jogo[dataToSaveFromState],), f )
 
     f.close()
     print("Jogo guardado em " + filename)
@@ -202,6 +149,7 @@ def carregar_estado_txt(filename):
         print(f"Ficheiro {filename} não encontrado. Iniciando novo jogo.")
         return False
     state={
+        'lifes': MAX_LIFES,
         'score': 0,
         'frame': 0,
         'enemies': [],
@@ -222,6 +170,8 @@ def carregar_estado_txt(filename):
             state['score'] = int(dados)
         elif tipo == "frame":
             state['frame'] = int(dados)
+        elif tipo == 'lifes':
+            state["lifes"] = int(dados)
         elif tipo == "player":
             x, y = dados.split(',')
             state['player_pos'] = (float(x), float(y))
@@ -317,47 +267,29 @@ def disparar_handler():
     return
 
 def gravar_handler():
-    filename=input("nome do ficheiro que vai ficar guardado men ").strip()
+    filename=input("nome do ficheiro que vai ficar guardado: ").strip()
     guardar_estado_txt(filename,STATE)
-    print("tá gravado cromo")
+    print("gravado ")
     return
-
-def infinity_signal(tur, screen): #função usada para criar o inimigo que aparece a fazer o simbolo de infinito na tela final
-    a = 5
-    t = 0
-    ix, iy = tur.pos()
-    while t <= 2*3.1415926535897932384626433832:
-        x = ix+ math.sin(t)*a*10
-        y = iy+math.sin(2*t)*17
-        tur.goto(x,y)
-        screen.update()
-        time.sleep(0.032)
-        t += 0.1
 
 
 def terminar_handler():
     if STATE.get("jogo_terminado", False):
         return #evitar chamar várias vezes o terminar o jogo, deu varios erros não fixes
-    
-    STATE["jogo_terminado"] = True
-    time.sleep(0.06)
+
+    time.sleep(0.6)
 
     screen = STATE["screen"]
     screen.clear()
     screen.bgcolor("black")
 
-    writeOnScreen("Fim do jogo!", 0, 20, "white", align="center", font=('Arial', 40, "bold"))
-    infinity_signal(criar_entidade(0,-17, "enemy"), screen)
-    writeOnScreen("Volta ao terminal para receberes novas instruções", 0, -70, "white", align="center", font=('Arial', 14, "bold"), keep=True)
-
-    game_over_dummy = turtle.Turtle(visible=False)
-    game_over_dummy.shape('enemy.gif')
-    game_over_animation_pos = [[]]
-    game_over_dummy
+    writeOnScreen("Fim do jogo!", 0, 20, "white", state, align="center", font=('Arial', 40, "bold"))
+    game_over_dummy = criar_entidade(0,-17, "enemy")
+    infinity_signal(game_over_dummy, screen)
+    writeOnScreen("Volta ao terminal para receberes novas instruções", 0, -70, "white", state, align="center", font=('Arial', 14, "bold"), keep=True)
 
     highscores = ler_highscores(HIGHSCORES_FILE)
     if len(highscores)<TOP_N or STATE["score"]>highscores[-1][1]:
-        print("GRANDEEEE +1 para o top10")
         username = input("Escreve o teu nome para ficar registado: ")
         highscores.append((username, STATE["score"]))
         highscores.sort(key=return_value_n(1), reverse=True) #falta alterar isto
@@ -374,7 +306,6 @@ def terminar_handler():
     for i in highscores_finais:
         print(i[0] + ":" + str(i[1]))
 
-    STATE["screen"].bye()
     sys.exit()
 
 def power_up_handler(): #função que define a ativação do power up assim como a sua visualização no jogo
@@ -387,10 +318,8 @@ def power_up_handler(): #função que define a ativação do power up assim como
     power_up["killing_area_center"] = bullet.pos()
     #print(bullet.pos())
     bx,by = bullet.pos()
-    explosao=turtle.Turtle() #criar um novo turtle, tentei usar o outro mas tornava-se muito rapidamente muito complicado
-    explosao.hideturtle()
+    explosao=turtle.Turtle(visible=False) #criar um novo turtle, tentei usar o outro mas tornava-se muito rapidamente muito complicado
     explosao.speed(0)
-    explosao.pu()
     explosao.goto(bx,by-50) # colocamos um raio de 50 em vez de um raio de 70 "como deveria ser" 
                             #para dar a ilusão de que não há injustiças, caso fosse exatamente 
                             #o mesmo tamanho e não acertasse por poucos pixels é muito mais frustrante
@@ -420,7 +349,7 @@ def atualizar_balas_player(state):
 def atualizar_balas_inimigos(state):
     for ebl in state["enemy_bullets"]:
         x, y = ebl.pos()
-        if y < -BORDA_Y + 20:
+        if y < -BORDA_Y - 20:
             ebl.hideturtle()
             state["enemy_bullets"].remove(ebl)
         ebl.setpos(x, y - ENEMY_BULLET_SPEED)
@@ -560,12 +489,12 @@ if __name__ == "__main__":
         state["player"] = criar_entidade(*loaded['player_pos'], "player")
         state["score"] = loaded['score']
         state["frame"] = loaded['frame']
+        state["enemy_moves"] = loaded["enemy_moves"]
 
         # Recriar inimigos com posições e direções
-        for x, y, direction in loaded['enemies']:
+        for x, y in loaded['enemies']:
             enemy = criar_entidade(x, y, "enemy")
             state["enemies"].append(enemy)
-            state["enemy_moves"].append(direction)
         
         # Recriar balas
         restaurar_balas(state, loaded["player_bullets"], "player")
