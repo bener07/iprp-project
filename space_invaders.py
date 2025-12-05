@@ -3,7 +3,7 @@ import random
 import time
 import os
 import sys
-from playsound import playsound
+#from playsound import playsound
 import math
 from extras import *
 
@@ -262,7 +262,7 @@ def disparar_handler():
     player = STATE["player"]
     x,y = player.pos()
     STATE["player_bullets"].append(criar_bala(x,y+10, "player"))
-    playsound("./pewpew.mp3", block=False)
+    #playsound("./pewpew.mp3", block=False)
     # print("[disparar_handler] por implementar")
     return
 
@@ -304,6 +304,7 @@ def terminar_handler():
             f.write(nome + ":" + str(pontos) + "\n")
         f.close()
         print("Highscore guardado!")
+    
     
     print("\n=== TOP HIGHSCORES ===")
     highscores_finais = ler_highscores(HIGHSCORES_FILE)
