@@ -61,7 +61,7 @@ def determinateEventExecution(probability):
 # Design Functions
 # =================
 
-def drawn_life(ix, iy, l): #extra
+def drawn_life(ix, iy, l): #"print" dos corações que representam as vidas
     t = turtle.Turtle(visible=True)
     t.penup()
     t.setx(ix + l*40)
@@ -69,7 +69,7 @@ def drawn_life(ix, iy, l): #extra
     t.shape("heart.gif")
     return t
 
-def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal"), keep=False):
+def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal"), keep=False): #função que limpa a tela e escreve as frases pedidas quando é chamada
     if STATE["panelWriter"] != None:
         writer = STATE["panelWriter"]
     else:
@@ -83,7 +83,7 @@ def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal"
     writer.color(color)
     writer.write(text, align=align, font=font)
 
-def panel(state): #extra
+def panel(state): #mostrar o score no canto da tela e pedir á função de desenhar as vidas para o fazer 
     writeOnScreen(
         "Score: "+str(state["score"]),
         -LARGURA/2+10,
@@ -96,7 +96,7 @@ def panel(state): #extra
         state["life_dummies"].append(drawn_life(LARGURA/2-40*state["lifes"], ALTURA/2-20, i))
 
 
-def atualizar_panel(state): #extra
+def atualizar_panel(state): #atualizar a função anterior
     writeOnScreen(
         "Score: "+str(state["score"]),
         -LARGURA/2+10,
@@ -322,7 +322,7 @@ def gravar_handler():
     print("tá gravado cromo")
     return
 
-def infinity_signal(tur, screen):
+def infinity_signal(tur, screen): #função usada para criar o inimigo que aparece a fazer o simbolo de infinito na tela final
     a = 5
     t = 0
     ix, iy = tur.pos()
@@ -360,7 +360,7 @@ def terminar_handler():
         print("GRANDEEEE +1 para o top10")
         username = input("Escreve o teu nome para ficar registado: ")
         highscores.append((username, STATE["score"]))
-        highscores.sort(key=lambda x: x[1], reverse=True)
+        highscores.sort(key=return_value_n(1), reverse=True) #falta alterar isto
         highscores = highscores[:TOP_N]
 
         f = open(HIGHSCORES_FILE, "w")
@@ -377,7 +377,7 @@ def terminar_handler():
     STATE["screen"].bye()
     sys.exit()
 
-def power_up_handler():
+def power_up_handler(): #função que define a ativação do power up assim como a sua visualização no jogo
     power_up = STATE["power_up"]
     if len(state["player_bullets"]) == 0:
         print("Não tens balas onde aplicar o power up!")
@@ -393,14 +393,14 @@ def power_up_handler():
     explosao.pu()
     explosao.goto(bx,by-50) # colocamos um raio de 50 em vez de um raio de 70 "como deveria ser" 
                             #para dar a ilusão de que não há injustiças, caso fosse exatamente 
-                            #o mesmo tamanho e não acertasse por 2 pixels é muito mais frustrante
-                            #do que ver um raio mais pequeno do que ele realmente é
+                            #o mesmo tamanho e não acertasse por poucos pixels é muito mais frustrante
+                            #mais vale dar a sensação ilusória de que o raio da explosão é apenas 50 de raio
     explosao.color("red","red")
     explosao.pd()
     explosao.begin_fill()
-    explosao.circle(50) # já expliquei antes cromo
+    explosao.circle(50) # já foi explicado antes
     explosao.end_fill()
-    STATE["screen"].ontimer(explosao.clear, 100) #unica parte mais chata de 0,1 em 0,1 seg vai apagara explosao
+    STATE["screen"].ontimer(explosao.clear, 100) #após 0.1seg apaga o circulo da explosão
     return
 
 # =========================
