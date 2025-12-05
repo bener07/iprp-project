@@ -287,6 +287,10 @@ def terminar_handler():
     game_over_dummy = criar_entidade(0,-17, "enemy")
     infinity_signal(game_over_dummy, screen)
     writeOnScreen("Volta ao terminal para receberes novas instruções", 0, -70, "white", state, align="center", font=('Arial', 14, "bold"), keep=True)
+    
+    time.sleep(3)
+
+    screen.bye()
 
     highscores = ler_highscores(HIGHSCORES_FILE)
     if len(highscores)<TOP_N or STATE["score"]>highscores[-1][1]:
