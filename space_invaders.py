@@ -3,7 +3,8 @@ import random
 import time
 import os
 import sys
-#from playsound import playsound
+from playsound import playsound
+import math
 
 # =========================
 # Parâmetros / Constantes
@@ -68,13 +69,14 @@ def drawn_life(ix, iy, l): #extra
     t.shape("heart.gif")
     return t
 
-def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal")): #extra
+def writeOnScreen(text, x, y, color, align='center', font=('Arial', 10, "normal"), keep=False):
     if STATE["panelWriter"] != None:
         writer = STATE["panelWriter"]
     else:
         writer = turtle.Turtle(visible=False)
         STATE["panelWriter"] = writer
-    writer.clear()
+    if not keep:
+        writer.clear()
     writer.hideturtle()
     writer.penup()
     writer.goto(x,y)
@@ -158,39 +160,38 @@ def atualizar_highscores(filename, score):
 def guardar_estado_txt(filename, state):
     guardar_jogo={
         "player_pos": state["player"].pos(),
-        "enemies_pos": [enemy.pos() for enemy in state["enemies"]],
+        "enemies_pos": [(*enemy.pos(), state["enemy_moves"][k]) for k, enemy in enumerate(state["enemies"])],
         "enemy_moves": state["enemy_moves"],
         "player_bullets": [b.pos() for b in state["player_bullets"]],
         "enemy_bullets": [b.pos() for b in state["enemy_bullets"]],
         "score": state["score"],
-        "frame": state["frame"]
+        "frame": state["frame"],
+        "lifes": state["lifes"]
     }
     f = open(filename, "w")
 
+    def saveDict(key, strPreFix):
+        for values in guardar_jogo[key]:
+            guardarDataEmFicheiro(strPreFix, values)
+
+    def guardarDataEmFicheiro(name, savingData):
+        f.write(name + ":" + ",".join([str(val) for val in savingData]) + "\n" )
+
     #player
-    x, y = guardar_jogo["player_pos"]
-    f.write("player:" + str(x) + "," + str(y) + "\n")
+    guardarDataEmFicheiro("player", guardar_jogo["player_pos"])
 
     # Inimigos
-    for i, (x, y) in enumerate(guardar_jogo["enemies_pos"]):
-        if i < len(guardar_jogo["enemy_moves"]):
-            direction = guardar_jogo["enemy_moves"][i]
-        else:
-            direction = 1  # Direção padrão       
-        #direction = guardar_jogo["enemy_moves"][i] estava assim tive de alterar porque ele estava a tentar iterar uma lista vazia quando guardava
-        f.write("enemy:" + str(x) + "," + str(y) + "," + str(direction) + "\n")
+    saveDict("enemies_pos", "enemy")
 
     # Balas do jogador
-    for x, y in guardar_jogo["player_bullets"]:
-        f.write("pbullet:" + str(x) + "," + str(y) + "\n")
+    saveDict("player_bullets", "pbullet")
 
     # Balas dos inimigos
-    for x, y in guardar_jogo["enemy_bullets"]:
-        f.write("ebullet:" + str(x) + "," + str(y) + "\n")
+    saveDict("enemy_bullets", "ebullet")
 
     # Score e frame
-    f.write("score:" + str(guardar_jogo['score']) + "\n")
-    f.write("frame:" + str(guardar_jogo['frame']) + "\n")
+    for dataToSaveFromState in ['score', 'frame', 'lifes']:
+        guardarDataEmFicheiro(dataToSaveFromState, (guardar_jogo[dataToSaveFromState],) )
 
     f.close()
     print("Jogo guardado em " + filename)
@@ -258,7 +259,7 @@ def criar_bala(x, y, tipo):
     t.penup()
     t.setpos(x,y)
     t.shape("square")
-    t.shapesize(0.8, 0.08, 5)
+    t.shapesize(0.8, 0.09, 1)
     if tipo == "player":
         t.color("yellow") ## Alterar para utilizar com inimigos
     else:
@@ -311,7 +312,7 @@ def disparar_handler():
     player = STATE["player"]
     x,y = player.pos()
     STATE["player_bullets"].append(criar_bala(x,y+10, "player"))
-    #playsound("./pewpew.mp3", block=False)
+    playsound("./pewpew.mp3", block=False)
     # print("[disparar_handler] por implementar")
     return
 
@@ -321,32 +322,45 @@ def gravar_handler():
     print("tá gravado cromo")
     return
 
+def infinity_signal(tur, screen):
+    a = 5
+    t = 0
+    ix, iy = tur.pos()
+    while t <= 2*3.1415926535897932384626433832:
+        x = ix+ math.sin(t)*a*10
+        y = iy+math.sin(2*t)*17
+        tur.goto(x,y)
+        screen.update()
+        time.sleep(0.032)
+        t += 0.1
+
+
 def terminar_handler():
     if STATE.get("jogo_terminado", False):
         return #evitar chamar várias vezes o terminar o jogo, deu varios erros não fixes
     
     STATE["jogo_terminado"] = True
+    time.sleep(0.06)
 
-    STATE["screen"].bye()
+    screen = STATE["screen"]
+    screen.clear()
+    screen.bgcolor("black")
+
+    writeOnScreen("Fim do jogo!", 0, 20, "white", align="center", font=('Arial', 40, "bold"))
+    infinity_signal(criar_entidade(0,-17, "enemy"), screen)
+    writeOnScreen("Volta ao terminal para receberes novas instruções", 0, -70, "white", align="center", font=('Arial', 14, "bold"), keep=True)
+
+    game_over_dummy = turtle.Turtle(visible=False)
+    game_over_dummy.shape('enemy.gif')
+    game_over_animation_pos = [[]]
+    game_over_dummy
 
     highscores = ler_highscores(HIGHSCORES_FILE)
     if len(highscores)<TOP_N or STATE["score"]>highscores[-1][1]:
         print("GRANDEEEE +1 para o top10")
-        while True:
-            username = input("Escreve o teu nome para ficar registado: ")
-            if len(username)>10:
-                print("nome muito longo. Máximo de 10 letras")
-            elif len(username)<2:
-                print("queres enganar quem? ninguém tem um nome assim tão curto")
-            elif username=="":
-                print("tens de ter um nome meu")
-            elif ":" in username:
-                print("Não podes ter ':' no teu nome")
-            else:
-                break
+        username = input("Escreve o teu nome para ficar registado: ")
         highscores.append((username, STATE["score"]))
-        firstValue = return_value_n(1)
-        highscores.sort(key=firstValue, reverse=True) 
+        highscores.sort(key=lambda x: x[1], reverse=True)
         highscores = highscores[:TOP_N]
 
         f = open(HIGHSCORES_FILE, "w")
@@ -360,10 +374,10 @@ def terminar_handler():
     for i in highscores_finais:
         print(i[0] + ":" + str(i[1]))
 
-    #STATE["screen"].bye()
+    STATE["screen"].bye()
     sys.exit()
 
-def power_up_handler(): #extra
+def power_up_handler():
     power_up = STATE["power_up"]
     if len(state["player_bullets"]) == 0:
         print("Não tens balas onde aplicar o power up!")
@@ -460,12 +474,17 @@ def verificar_colisoes_enemy_bullets(state):
         if state["power_up"]["activated"]:
                 radius = COLLISION_RADIUS*7
                 bx, by = state["power_up"]["killing_area_center"]
-        in_impact_area = lambda x,y : (x-bx)**2 + (y-by)**2 <= radius**2
-        for enemy in state["enemies"]:
+
+        def in_impact_area(x,y):
+            return (x-bx)**2 + (y-by)**2 <= radius**2
+
+        for k, enemy in enumerate(state["enemies"]):   # enumerate para mais à frente remover a direction do enemy na posição k. 
+                                                        # para depois ao guardar as enemy_moves cada valor estar associado ao index correto do enemy correspondente e não haver excessos
             x, y = enemy.pos()
             if in_impact_area(x,y):
                 enemy.hideturtle()
                 state["enemies"].remove(enemy)
+                state["enemy_moves"].remove(state["enemy_moves"][k]) # elimina assim a REFERÊNCIA da direction e não pelo valor
                 state["score"] += 50
         # se acertar num enemy então o score altera-se
         if state["lastScore"] != state["score"] and bullet in state["player_bullets"]:
@@ -532,7 +551,7 @@ if __name__ == "__main__":
         "jogo_terminado": False,
         "lastScore": 0,
         "panelWriter": None,
-        "hit": False,
+        "hit": False, # para verificar se o utilizador levou com um balázio
     }
 
     # Construção inicial
@@ -584,11 +603,11 @@ if __name__ == "__main__":
         
         if verificar_colisao_player_com_inimigos(STATE):
             print("Colisão direta com inimigo! Game Over")
-            state["lifes"] = 0 #vai logo terminar o jogo em vez de checar mil vezes se terminou ou não
             atualizar_panel(state)
-        
+            terminar_handler()
+
         if state["lifes"] == 0:
-            print("O utilizador perdeu todas as suas vidas")
+            print("O utilizador perdeu todas as vidas")
             terminar_handler()
 
         if verificar_colisoes_player_bullets(STATE):
@@ -611,4 +630,3 @@ if __name__ == "__main__":
         STATE["frame"] += 1
         screen.update()
         time.sleep(0.016)
-    # th.join()
