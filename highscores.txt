@@ -1,5 +1,10 @@
-b:200
-:100
-ben:50
-b:0
-b:0
+junior:1100
+bom dia:1050
+roberto:1050
+pepe:950
+ola:850
+joni:750
+alberto:700
+jusinda:700
+rodrigo:600
+batata:350
